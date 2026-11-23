@@ -1,0 +1,1577 @@
+sb_publishable_5yfryhpW2LhLk4eJgnGWEg_n8_ZBWKT<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painonseuranta</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border: #e2e8f0;
+      --radius: 14px;
+      --shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-outline {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: #f8fafc;
+    }
+
+    .btn-danger-ghost {
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 10px;
+      font-size: 0.85rem;
+    }
+
+    .btn-danger-ghost:hover:not(:disabled) {
+      color: var(--danger);
+      background: #fef2f2;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+
+    /* Setup / Auth View */
+    .setup-wrapper {
+      max-width: 500px;
+      margin: 32px auto;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 600px) {
+      .form-grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .form-grid-3 {
+        grid-template-columns: 1fr 1.3fr auto;
+        align-items: end;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 1rem;
+      color: var(--text);
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .input-error {
+      border-color: var(--danger) !important;
+      background-color: #fef2f2 !important;
+    }
+
+    /* Mode Selector (Tabs / Pills) */
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 10px;
+      gap: 4px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .mode-btn.active {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+    }
+
+    .calc-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .calc-result-banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .calc-result-banner small {
+      display: block;
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: #3b82f6;
+      margin-top: 2px;
+    }
+
+    .alert-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+    }
+
+    .alert-info {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 680px) {
+      .metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .metric-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .metric-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .metric-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-top: 4px;
+      color: var(--text);
+    }
+
+    .metric-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .status-ahead {
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .status-behind {
+      color: #b91c1c;
+      font-weight: 600;
+    }
+
+    /* Chart */
+    .chart-container {
+      position: relative;
+      height: 340px;
+      width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      .chart-container {
+        height: 280px;
+      }
+    }
+
+    /* History List */
+    .history-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .history-weight {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .history-date {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .badge-down {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-up {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+      overflow-y: auto;
+    }
+
+    .modal-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+      margin: auto;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LATAUSNÄKYMÄ -->
+  <div id="loadingView" class="setup-wrapper">
+    <div class="card" style="text-align: center; padding: 36px 20px;">
+      <p style="color: var(--muted); font-weight: 600;">Yhdistetään pilvitietokantaan...</p>
+    </div>
+  </div>
+
+  <!-- KIRJAUTUMISNÄKYMÄ (SUPABASE) -->
+  <div id="loginView" class="setup-wrapper hidden">
+    <div class="card">
+      <h2 class="card-title" style="font-size: 1.3rem;">Painonseuranta – Kirjaudu sisään</h2>
+      <p style="color: var(--muted); font-size: 0.92rem; margin-bottom: 18px;">
+        Kirjaudu sisään omalla Supabase-tunnuksellasi synkronoidaksesi tietosi pilveen.
+      </p>
+
+      <div id="configWarning" class="alert-info hidden">
+        <strong>Supabase-asetukset puuttuvat:</strong> Lisää oma <code>SUPABASE_URL</code> ja <code>SUPABASE_ANON_KEY</code> tämän tiedoston alussa olevaan skriptiosioon ennen käyttöä.
+      </div>
+
+      <div id="loginError" class="alert-error hidden"></div>
+
+      <form id="loginForm" class="form-grid">
+        <div class="form-group">
+          <label for="loginEmail">Sähköpostiosoite</label>
+          <input type="email" id="loginEmail" placeholder="nimi@esimerkki.fi" required />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Salasana</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required />
+        </div>
+        <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="margin-top: 4px;">Kirjaudu sisään</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ENSIMMÄISEN KERRAN PERUSTIEDOT -->
+  <div id="setupView" class="setup-wrapper hidden">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2 class="card-title" style="font-size: 1.3rem; margin-bottom: 0;">Tervetuloa painonseurantaan</h2>
+        <button type="button" id="setupLogoutBtn" class="btn btn-danger-ghost">Kirjaudu ulos</button>
+      </div>
+      <p style="color: var(--muted); font-size: 0.92rem; margin-bottom: 18px;">
+        Syötä perustietosi ja tavoitteesi kertaalleen. Voit muokata niitä myöhemmin asetuksista.
+      </p>
+      <form id="setupForm" class="form-grid">
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label for="setupGender">Sukupuoli</label>
+            <select id="setupGender" required>
+              <option value="mies">Mies</option>
+              <option value="nainen">Nainen</option>
+              <option value="muu">Muu</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="setupHeight">Pituus (cm)</label>
+            <input type="text" inputmode="decimal" id="setupHeight" placeholder="esim. 180" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="setupTargetWeight">Tavoitepaino (kg)</label>
+          <input type="text" inputmode="decimal" id="setupTargetWeight" placeholder="esim. 80,0" required />
+        </div>
+
+        <div class="form-group">
+          <label>Tavoiteajankohdan määritys</label>
+          <div class="mode-switch" id="setupModeSwitch">
+            <button type="button" class="mode-btn active" data-mode="date">Asetan päivämäärän itse</button>
+            <button type="button" class="mode-btn" data-mode="rate">Laske tahdin perusteella</button>
+          </div>
+        </div>
+
+        <!-- VAIHTOEHTO A: Päivämäärä -->
+        <div id="setupDatePanel" class="form-group">
+          <label for="setupTargetDate">Tavoitepäivämäärä (pp.kk.vvvv)</label>
+          <input type="text" id="setupTargetDate" placeholder="esim. 1.5.2027" />
+        </div>
+
+        <!-- VAIHTOEHTO B: Laskenta viikkotahdista -->
+        <div id="setupRatePanel" class="calc-box hidden">
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label for="setupStartWeight">Nykyinen lähtöpaino (kg)</label>
+              <input type="text" inputmode="decimal" id="setupStartWeight" placeholder="esim. 92,5" />
+            </div>
+            <div class="form-group">
+              <label for="setupWeeklyRate">Tavoitetahti (kg/vko)</label>
+              <input type="text" inputmode="decimal" id="setupWeeklyRate" value="0,5" placeholder="esim. 0,5" />
+            </div>
+          </div>
+          <div id="setupCalcResult" class="calc-result-banner">
+            Syötä lähtöpaino, tavoitepaino ja tahti laskeaksesi päivämäärän.
+          </div>
+        </div>
+
+        <button type="submit" id="setupSubmitBtn" class="btn btn-primary" style="margin-top: 6px;">Aloita seuranta</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- PÄÄNÄKYMÄ -->
+  <div id="mainView" class="container hidden">
+    <header>
+      <div>
+        <h1>Painonseuranta</h1>
+        <div id="profileSummary" style="font-size: 0.85rem; color: var(--muted);"></div>
+      </div>
+      <div class="header-actions">
+        <button id="openSettingsBtn" class="btn btn-outline">⚙️ Asetukset</button>
+        <button id="logoutBtn" class="btn btn-outline">Kirjaudu ulos</button>
+      </div>
+    </header>
+
+    <!-- UUDEN MITTAUKSEN SYÖTTÖ -->
+    <div class="card">
+      <div class="card-title">Kirjaa uusi mittaus</div>
+      <form id="measurementForm" class="form-grid form-grid-3">
+        <div class="form-group">
+          <label for="weightInput">Paino (kg)</label>
+          <input type="text" inputmode="decimal" id="weightInput" placeholder="esim. 85,4" required />
+        </div>
+        <div class="form-group">
+          <label for="timestampInput">Mittausajankohta (pp.kk.vvvv tt.mm)</label>
+          <input type="text" id="timestampInput" placeholder="23.11.2026 13.26" required />
+        </div>
+        <button type="submit" id="saveMeasurementBtn" class="btn btn-primary" style="height: 43px;">Tallenna</button>
+      </form>
+    </div>
+
+    <!-- TUNNUSLUVUT -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Nykyinen paino & BMI</div>
+        <div class="metric-value" id="metricCurrentWeight">–</div>
+        <div class="metric-sub" id="metricCurrentBmi">Tavoite-BMI: –</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Muutos alusta</div>
+        <div class="metric-value" id="metricTotalChange">–</div>
+        <div class="metric-sub" id="metricStartWeight">Aloituspaino: –</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Jäljellä tavoitteeseen</div>
+        <div class="metric-value" id="metricRemaining">–</div>
+        <div class="metric-sub" id="metricTargetInfo">Tavoite: –</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Ennustettu saavutuspäivä</div>
+        <div class="metric-value" id="metricPredictedDate">–</div>
+        <div class="metric-sub" id="metricScheduleDiff">Tavoitetahti: –</div>
+      </div>
+    </div>
+
+    <!-- GRAAFINEN VISUALISOINTI -->
+    <div class="card">
+      <div class="card-title">Painokehitys ja tavoitepolut</div>
+      <div id="chartEmpty" class="empty-state">
+        Lisää ensimmäinen mittaustulos nähdäksesi painokehityksen ja lineaariset tavoitepolut.
+      </div>
+      <div id="chartWrapper" class="chart-container hidden">
+        <canvas id="weightChart"></canvas>
+      </div>
+    </div>
+
+    <!-- MITTAUSHISTORIA -->
+    <div class="card">
+      <div class="card-title">Mittaushistoria</div>
+      <div id="historyEmpty" class="empty-state">Ei vielä kirjattuja mittauksia.</div>
+      <ul id="historyList" class="history-list"></ul>
+    </div>
+  </div>
+
+  <!-- ASETUKSET MODAALI -->
+  <div id="settingsModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h2 class="card-title" style="font-size: 1.2rem;">Muokkaa perustietoja</h2>
+      <form id="settingsForm" class="form-grid">
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label for="editGender">Sukupuoli</label>
+            <select id="editGender" required>
+              <option value="mies">Mies</option>
+              <option value="nainen">Nainen</option>
+              <option value="muu">Muu</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editHeight">Pituus (cm)</label>
+            <input type="text" inputmode="decimal" id="editHeight" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editTargetWeight">Tavoitepaino (kg)</label>
+          <input type="text" inputmode="decimal" id="editTargetWeight" required />
+        </div>
+
+        <div class="form-group">
+          <label>Tavoiteajankohdan määritys</label>
+          <div class="mode-switch" id="editModeSwitch">
+            <button type="button" class="mode-btn active" data-mode="date">Asetan päivämäärän itse</button>
+            <button type="button" class="mode-btn" data-mode="rate">Laske tahdin perusteella</button>
+          </div>
+        </div>
+
+        <!-- VAIHTOEHTO A: Päivämäärä -->
+        <div id="editDatePanel" class="form-group">
+          <label for="editTargetDate">Tavoitepäivämäärä (pp.kk.vvvv)</label>
+          <input type="text" id="editTargetDate" />
+        </div>
+
+        <!-- VAIHTOEHTO B: Laskenta viikkotahdista -->
+        <div id="editRatePanel" class="calc-box hidden">
+          <div id="editBaseWeightGroup" class="form-group">
+            <label for="editBaseWeight">Lähtöpaino laskentaan (kg)</label>
+            <input type="text" inputmode="decimal" id="editBaseWeight" placeholder="esim. 90,0" />
+          </div>
+          <div id="editBaseSourceGroup" class="form-group hidden">
+            <label for="editBaseSource">Laskennan lähtöpiste</label>
+            <select id="editBaseSource">
+              <option value="latest">Viimeisin mittaus</option>
+              <option value="first">Ensimmäinen mittaus</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editWeeklyRate">Haluttu viikkotahti (kg/vko)</label>
+            <input type="text" inputmode="decimal" id="editWeeklyRate" value="0,5" placeholder="esim. 0,5" />
+          </div>
+          <div id="editCalcResult" class="calc-result-banner">
+            Syötä tavoitepaino ja viikkotahti laskeaksesi päivämäärän.
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="closeSettingsBtn" class="btn btn-outline">Peruuta</button>
+          <button type="submit" id="saveSettingsBtn" class="btn btn-primary">Tallenna muutokset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // SUPABASE-ASETUKSET: Korvaa nämä kahdella arvolla oman Supabase-projektisi
+    // asetuksista (Project Settings -> API -> Project URL & anon public key).
+    // =========================================================================
+    const SUPABASE_URL = 'https://kezydsnwnwjubfdtirfe.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_5yfryhpW2LhLk4eJgnGWEg_n8_ZBWKT';
+
+    const isConfigured = !SUPABASE_URL.includes('OMA-PROJEKTISI') && !SUPABASE_PUBLISHABLE_KEY.includes('OMA-AVAIN');
+    const supabaseClient = isConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+
+    // Sovelluksen muistissa oleva tila (JSON-rakenne vastaa täysin aiempaa)
+    let currentUser = null;
+    let appState = {
+      profile: null,
+      measurements: []
+    };
+
+    let weightChart = null;
+    let setupTargetMode = 'date';
+    let editTargetMode = 'date';
+
+    // --- SUOMALAISET LOKAALIAPUFUNKTIOT ---
+
+    function formatNumFi(num, decimals = 1) {
+      if (num === null || num === undefined || isNaN(num)) return '–';
+      return Number(num).toLocaleString('fi-FI', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function parseNumFi(str) {
+      if (typeof str === 'number') return str;
+      if (!str) return NaN;
+      const normalized = String(str).trim().replace(/\s+/g, '').replace(',', '.');
+      return parseFloat(normalized);
+    }
+
+    function formatDateFi(isoOrDate) {
+      const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+      if (isNaN(d.getTime())) return '–';
+      return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+    }
+
+    function formatDateTimeFi(isoOrDate) {
+      const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+      if (isNaN(d.getTime())) return '–';
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()} ${hh}.${mm}`;
+    }
+
+    function dateToISODateString(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function parseDateFiToISO(str) {
+      if (!str) return null;
+      const cleaned = String(str).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) return cleaned;
+
+      const match = cleaned.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+      if (!match) return null;
+      const day = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const year = parseInt(match[3], 10);
+
+      const d = new Date(year, month - 1, day);
+      if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) {
+        return null;
+      }
+      return dateToISODateString(d);
+    }
+
+    function parseDateTimeFi(str) {
+      if (!str) return null;
+      const cleaned = String(str).trim();
+      const match = cleaned.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2})[.:](\d{2}))?$/);
+      if (!match) return null;
+
+      const day = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const year = parseInt(match[3], 10);
+      const hour = match[4] !== undefined ? parseInt(match[4], 10) : 8;
+      const minute = match[5] !== undefined ? parseInt(match[5], 10) : 0;
+
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+
+      const d = new Date(year, month - 1, day, hour, minute, 0, 0);
+      if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) {
+        return null;
+      }
+      return d;
+    }
+
+    // --- TAVOITEPÄIVÄMÄÄRÄN JA ENNUSTEEN LASKENTALOGIIKKA ---
+
+    function computeTargetDateFromRate(startWeight, targetWeight, weeklyRate, baseDateObj) {
+      if (isNaN(startWeight) || isNaN(targetWeight) || isNaN(weeklyRate) || weeklyRate <= 0) {
+        return null;
+      }
+      const weightDiff = Math.abs(startWeight - targetWeight);
+      if (weightDiff < 0.05) {
+        return {
+          dateObj: new Date(baseDateObj),
+          isoDate: dateToISODateString(baseDateObj),
+          weeks: 0,
+          days: 0
+        };
+      }
+      const weeksNeeded = weightDiff / weeklyRate;
+      const daysNeeded = Math.ceil(weeksNeeded * 7);
+      const targetDateObj = new Date(baseDateObj.getTime());
+      targetDateObj.setDate(targetDateObj.getDate() + daysNeeded);
+      return {
+        dateObj: targetDateObj,
+        isoDate: dateToISODateString(targetDateObj),
+        weeks: weeksNeeded,
+        days: daysNeeded
+      };
+    }
+
+    function computeConstantRateForecast(profile, measurements) {
+      if (!profile || measurements.length === 0) return null;
+
+      const first = measurements[0];
+      const latest = measurements[measurements.length - 1];
+      const firstTime = new Date(first.timestamp).getTime();
+      const latestTime = new Date(latest.timestamp).getTime();
+      const originalTargetDateObj = new Date(profile.targetDate + 'T08:00:00');
+      const originalTargetTime = originalTargetDateObj.getTime();
+
+      const originalDurationMs = originalTargetTime - firstTime;
+      const originalWeightDelta = profile.targetWeightKg - first.weightKg;
+
+      let velocityKgPerMs = 0;
+      let plannedWeeklyRate = 0;
+
+      if (originalDurationMs > 0 && Math.abs(originalWeightDelta) >= 0.01) {
+        velocityKgPerMs = originalWeightDelta / originalDurationMs;
+        plannedWeeklyRate = velocityKgPerMs * (1000 * 60 * 60 * 24 * 7);
+      } else if (profile.weeklyRateKg && profile.weeklyRateKg > 0) {
+        const sign = profile.targetWeightKg <= latest.weightKg ? -1 : 1;
+        plannedWeeklyRate = sign * profile.weeklyRateKg;
+        velocityKgPerMs = plannedWeeklyRate / (1000 * 60 * 60 * 24 * 7);
+      } else {
+        return null;
+      }
+
+      const remainingWeightDelta = profile.targetWeightKg - latest.weightKg;
+      const isWeightLoss = originalWeightDelta <= 0;
+      const goalReached = isWeightLoss
+        ? latest.weightKg <= profile.targetWeightKg
+        : latest.weightKg >= profile.targetWeightKg;
+
+      if (goalReached) {
+        return {
+          predictedTimestamp: latest.timestamp,
+          predictedDateObj: new Date(latestTime),
+          plannedWeeklyRate,
+          daysDiffFromOriginal: Math.round((originalTargetTime - latestTime) / (1000 * 60 * 60 * 24)),
+          goalReached: true
+        };
+      }
+
+      const remainingDurationMs = remainingWeightDelta / velocityKgPerMs;
+      const predictedTime = latestTime + remainingDurationMs;
+      const predictedDateObj = new Date(predictedTime);
+      const daysDiffFromOriginal = Math.round((originalTargetTime - predictedTime) / (1000 * 60 * 60 * 24));
+
+      return {
+        predictedTimestamp: predictedDateObj.toISOString(),
+        predictedDateObj,
+        plannedWeeklyRate,
+        daysDiffFromOriginal,
+        goalReached: false
+      };
+    }
+
+    function updateSetupCalculationPreview() {
+      const startW = parseNumFi(document.getElementById('setupStartWeight').value);
+      const targetW = parseNumFi(document.getElementById('setupTargetWeight').value);
+      const rate = parseNumFi(document.getElementById('setupWeeklyRate').value);
+      const banner = document.getElementById('setupCalcResult');
+
+      const res = computeTargetDateFromRate(startW, targetW, rate, new Date());
+      if (!res) {
+        banner.innerHTML = 'Syötä lähtöpaino, tavoitepaino ja positiivinen viikkotahti (kg/vko).';
+        return null;
+      }
+      const direction = targetW <= startW ? 'pudotusta' : 'nousua';
+      const diffKg = Math.abs(startW - targetW);
+      banner.innerHTML = `Laskettu tavoitepäivämäärä: <strong>${formatDateFi(res.dateObj)}</strong>
+        <small>${formatNumFi(diffKg, 1)} kg ${direction} • kesto n. ${formatNumFi(res.weeks, 1)} vko (${res.days} pv)</small>`;
+      return res;
+    }
+
+    function updateEditCalculationPreview() {
+      const measurements = appState.measurements;
+      const targetW = parseNumFi(document.getElementById('editTargetWeight').value);
+      const rate = parseNumFi(document.getElementById('editWeeklyRate').value);
+      const banner = document.getElementById('editCalcResult');
+
+      let baseWeight = NaN;
+      let baseDate = new Date();
+      let sourceLabel = '';
+
+      if (measurements.length > 0) {
+        const src = document.getElementById('editBaseSource').value;
+        const m = src === 'first' ? measurements[0] : measurements[measurements.length - 1];
+        baseWeight = m.weightKg;
+        baseDate = new Date(m.timestamp);
+        sourceLabel = `${src === 'first' ? 'Ensimmäisestä' : 'Viimeisimmästä'} mittauksesta (${formatNumFi(baseWeight, 1)} kg, ${formatDateFi(baseDate)})`;
+      } else {
+        baseWeight = parseNumFi(document.getElementById('editBaseWeight').value);
+        sourceLabel = `Lähtöpainosta ${isNaN(baseWeight) ? '–' : formatNumFi(baseWeight, 1) + ' kg'} (tästä päivästä)`;
+      }
+
+      const res = computeTargetDateFromRate(baseWeight, targetW, rate, baseDate);
+      if (!res) {
+        banner.innerHTML = 'Syötä lähtötiedot, tavoitepaino ja positiivinen viikkotahti (kg/vko).';
+        return null;
+      }
+      const diffKg = Math.abs(baseWeight - targetW);
+      banner.innerHTML = `Laskettu tavoitepäivämäärä: <strong>${formatDateFi(res.dateObj)}</strong>
+        <small>${sourceLabel} • ${formatNumFi(diffKg, 1)} kg / ${formatNumFi(res.weeks, 1)} vko (${res.days} pv)</small>`;
+      return res;
+    }
+
+    // --- SUPABASE-PILVITALLENNUS ---
+
+    async function fetchCloudData() {
+      if (!supabaseClient || !currentUser) return;
+
+      const { data: row, error } = await supabaseClient
+        .from('weight_tracker_data')
+        .select('payload')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Virhe haettaessa tietoja Supabasesta:', error.message);
+        alert('Tietojen lataus epäonnistui: ' + error.message);
+        return;
+      }
+
+      if (row && row.payload) {
+        appState = {
+          profile: row.payload.profile || null,
+          measurements: Array.isArray(row.payload.measurements) ? row.payload.measurements : []
+        };
+        appState.measurements.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      } else {
+        appState = { profile: null, measurements: [] };
+      }
+    }
+
+    async function saveCloudData(newState) {
+      if (!supabaseClient || !currentUser) return false;
+
+      newState.measurements.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      const { error } = await supabaseClient
+        .from('weight_tracker_data')
+        .upsert({
+          user_id: currentUser.id,
+          payload: newState,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error('Virhe tallennettaessa Supabaseen:', error.message);
+        alert('Tallennus pilveen epäonnistui: ' + error.message);
+        return false;
+      }
+
+      appState = newState;
+      return true;
+    }
+
+    function setDefaultDateTime() {
+      const now = new Date();
+      document.getElementById('timestampInput').value = formatDateTimeFi(now);
+    }
+
+    function calculateBMI(weightKg, heightCm) {
+      if (!weightKg || !heightCm) return null;
+      const heightM = heightCm / 100;
+      return weightKg / (heightM * heightM);
+    }
+
+    function markInvalid(el, isInvalid) {
+      if (isInvalid) {
+        el.classList.add('input-error');
+      } else {
+        el.classList.remove('input-error');
+      }
+    }
+
+    function showOnlyView(viewId) {
+      ['loadingView', 'loginView', 'setupView', 'mainView'].forEach(id => {
+        document.getElementById(id).classList.toggle('hidden', id !== viewId);
+      });
+    }
+
+    // --- KÄYTTÖLIITTYMÄN PÄIVITYS ---
+
+    function renderApp() {
+      if (!currentUser) {
+        showOnlyView('loginView');
+        return;
+      }
+
+      if (!appState.profile) {
+        showOnlyView('setupView');
+        const defaultTarget = new Date();
+        defaultTarget.setMonth(defaultTarget.getMonth() + 3);
+        document.getElementById('setupTargetDate').value = formatDateFi(defaultTarget);
+        return;
+      }
+
+      showOnlyView('mainView');
+      setDefaultDateTime();
+
+      const { profile, measurements } = appState;
+      const targetBmi = calculateBMI(profile.targetWeightKg, profile.heightCm);
+      const originalTargetDateObj = new Date(profile.targetDate + 'T08:00:00');
+
+      document.getElementById('profileSummary').textContent =
+        `Pituus: ${formatNumFi(profile.heightCm, 0)} cm • Tavoite: ${formatNumFi(profile.targetWeightKg, 1)} kg (alkup. tavoitepäivä ${formatDateFi(originalTargetDateObj)})`;
+
+      const forecast = computeConstantRateForecast(profile, measurements);
+
+      if (measurements.length === 0) {
+        document.getElementById('metricCurrentWeight').textContent = '–';
+        document.getElementById('metricCurrentBmi').textContent = `Tavoite-BMI: ${formatNumFi(targetBmi, 1)}`;
+        document.getElementById('metricTotalChange').textContent = '–';
+        document.getElementById('metricStartWeight').textContent = 'Aloituspaino: –';
+        document.getElementById('metricRemaining').textContent = '–';
+        document.getElementById('metricTargetInfo').textContent = `Tavoite: ${formatNumFi(profile.targetWeightKg, 1)} kg`;
+        document.getElementById('metricPredictedDate').textContent = formatDateFi(originalTargetDateObj);
+        document.getElementById('metricScheduleDiff').textContent = 'Alkuperäinen tavoitepäivä';
+      } else {
+        const first = measurements[0];
+        const latest = measurements[measurements.length - 1];
+        const currentBmi = calculateBMI(latest.weightKg, profile.heightCm);
+
+        document.getElementById('metricCurrentWeight').textContent = `${formatNumFi(latest.weightKg, 1)} kg`;
+        document.getElementById('metricCurrentBmi').textContent =
+          `BMI: ${formatNumFi(currentBmi, 1)} (Tavoite: ${formatNumFi(targetBmi, 1)})`;
+
+        const totalDiff = latest.weightKg - first.weightKg;
+        const diffSign = totalDiff > 0 ? '+' : '';
+        document.getElementById('metricTotalChange').textContent = `${diffSign}${formatNumFi(totalDiff, 1)} kg`;
+        document.getElementById('metricStartWeight').textContent = `Aloitus: ${formatNumFi(first.weightKg, 1)} kg`;
+
+        const remaining = latest.weightKg - profile.targetWeightKg;
+        document.getElementById('metricRemaining').textContent =
+          remaining > 0
+            ? `${formatNumFi(remaining, 1)} kg`
+            : `Saavutettu (${formatNumFi(Math.abs(remaining), 1)} kg alle)`;
+        document.getElementById('metricTargetInfo').textContent = `Tavoite: ${formatNumFi(profile.targetWeightKg, 1)} kg`;
+
+        const predEl = document.getElementById('metricPredictedDate');
+        const diffEl = document.getElementById('metricScheduleDiff');
+
+        if (forecast) {
+          predEl.textContent = formatDateFi(forecast.predictedDateObj);
+          const rateSign = forecast.plannedWeeklyRate > 0 ? '+' : '';
+          const rateText = `${rateSign}${formatNumFi(forecast.plannedWeeklyRate, 2)} kg/vko`;
+
+          if (forecast.goalReached) {
+            diffEl.innerHTML = `<span class="status-ahead">Tavoite saavutettu!</span>`;
+          } else if (forecast.daysDiffFromOriginal > 0) {
+            diffEl.innerHTML = `<span class="status-ahead">${forecast.daysDiffFromOriginal} pv edellä</span> (${rateText})`;
+          } else if (forecast.daysDiffFromOriginal < 0) {
+            diffEl.innerHTML = `<span class="status-behind">${Math.abs(forecast.daysDiffFromOriginal)} pv jäljessä</span> (${rateText})`;
+          } else {
+            diffEl.textContent = `Täsmälleen aikataulussa (${rateText})`;
+          }
+        } else {
+          predEl.textContent = formatDateFi(originalTargetDateObj);
+          diffEl.textContent = `Alkup. tavoite: ${formatDateFi(originalTargetDateObj)}`;
+        }
+      }
+
+      renderChart(profile, measurements, forecast);
+      renderHistory(measurements);
+    }
+
+    // --- KAAVIO ---
+
+    function renderChart(profile, measurements, forecast) {
+      const chartEmpty = document.getElementById('chartEmpty');
+      const chartWrapper = document.getElementById('chartWrapper');
+
+      if (measurements.length === 0) {
+        chartEmpty.classList.remove('hidden');
+        chartWrapper.classList.add('hidden');
+        return;
+      }
+
+      chartEmpty.classList.add('hidden');
+      chartWrapper.classList.remove('hidden');
+
+      const first = measurements[0];
+      const latest = measurements[measurements.length - 1];
+      const originalTargetTimestamp = new Date(profile.targetDate + 'T08:00:00').toISOString();
+
+      const actualSeries = measurements.map(m => ({
+        x: m.timestamp,
+        y: m.weightKg
+      }));
+
+      const initialPlanSeries = [
+        { x: first.timestamp, y: first.weightKg },
+        { x: originalTargetTimestamp, y: profile.targetWeightKg }
+      ];
+
+      const datasets = [
+        {
+          label: 'Toteutunut paino',
+          data: actualSeries,
+          borderColor: '#2563eb',
+          backgroundColor: '#2563eb',
+          borderWidth: 3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          tension: 0.1
+        },
+        {
+          label: 'Alkuperäinen tavoitepolku',
+          data: initialPlanSeries,
+          borderColor: '#94a3b8',
+          backgroundColor: '#94a3b8',
+          borderWidth: 2,
+          borderDash: [6, 6],
+          pointRadius: [4, 6],
+          pointStyle: ['circle', 'star'],
+          tension: 0
+        }
+      ];
+
+      if (measurements.length >= 2 && forecast && !forecast.goalReached) {
+        const updatedPlanSeries = [
+          { x: latest.timestamp, y: latest.weightKg },
+          { x: forecast.predictedTimestamp, y: profile.targetWeightKg }
+        ];
+
+        datasets.push({
+          label: 'Ennustepolku (vakiovauhti)',
+          data: updatedPlanSeries,
+          borderColor: '#10b981',
+          backgroundColor: '#10b981',
+          borderWidth: 2.5,
+          borderDash: [4, 4],
+          pointRadius: [4, 7],
+          pointStyle: ['circle', 'rectRot'],
+          tension: 0
+        });
+      }
+
+      const ctx = document.getElementById('weightChart').getContext('2d');
+      if (weightChart) {
+        weightChart.destroy();
+      }
+
+      weightChart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          locale: 'fi-FI',
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 16
+              }
+            },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  if (!items.length) return '';
+                  return formatDateTimeFi(items[0].parsed.x);
+                },
+                label: (ctx) => {
+                  let base = `${ctx.dataset.label}: ${formatNumFi(ctx.parsed.y, 1)} kg`;
+                  if (ctx.dataset.label === 'Ennustepolku (vakiovauhti)' && ctx.dataIndex === 1 && forecast) {
+                    const d = forecast.daysDiffFromOriginal;
+                    if (d > 0) base += ` (${d} pv edellä aikataulua)`;
+                    else if (d < 0) base += ` (${Math.abs(d)} pv jäljessä aikataulusta)`;
+                    else base += ` (alkuperäisessä aikataulussa)`;
+                  }
+                  return base;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day'
+              },
+              ticks: {
+                callback: function(value) {
+                  const d = new Date(value);
+                  return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+                }
+              },
+              grid: {
+                color: '#f1f5f9'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Paino (kg)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return `${formatNumFi(value, 1)} kg`;
+                }
+              },
+              grid: {
+                color: '#f1f5f9'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // --- HISTORIA ---
+
+    function renderHistory(measurements) {
+      const list = document.getElementById('historyList');
+      const empty = document.getElementById('historyEmpty');
+      list.innerHTML = '';
+
+      if (measurements.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      const indexed = measurements.map((m, idx) => ({ ...m, originalIndex: idx })).reverse();
+
+      indexed.forEach((item, pos) => {
+        const li = document.createElement('li');
+        li.className = 'history-item';
+
+        let badgeHtml = '';
+        if (pos < indexed.length - 1) {
+          const prev = indexed[pos + 1];
+          const diff = item.weightKg - prev.weightKg;
+          if (Math.abs(diff) >= 0.05) {
+            const sign = diff > 0 ? '+' : '';
+            const cls = diff <= 0 ? 'badge-down' : 'badge-up';
+            badgeHtml = `<span class="badge ${cls}">${sign}${formatNumFi(diff, 1)} kg</span>`;
+          }
+        }
+
+        li.innerHTML = `
+          <div>
+            <span class="history-weight">${formatNumFi(item.weightKg, 1)} kg</span>
+            ${badgeHtml}
+            <div class="history-date">${formatDateTimeFi(item.timestamp)}</div>
+          </div>
+          <button class="btn btn-danger-ghost" data-index="${item.originalIndex}" title="Poista mittaus">Poista</button>
+        `;
+        list.appendChild(li);
+      });
+
+      list.querySelectorAll('button[data-index]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          const idx = parseInt(btn.getAttribute('data-index'), 10);
+          const nextMeasurements = [...appState.measurements];
+          nextMeasurements.splice(idx, 1);
+          const ok = await saveCloudData({
+            profile: appState.profile,
+            measurements: nextMeasurements
+          });
+          if (ok) renderApp();
+          else btn.disabled = false;
+        });
+      });
+    }
+
+    // --- TILAN VAIHTO (PÄIVÄMÄÄRÄ VS. LASKENTA) ---
+
+    function setSetupMode(mode) {
+      setupTargetMode = mode;
+      document.querySelectorAll('#setupModeSwitch .mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      document.getElementById('setupDatePanel').classList.toggle('hidden', mode !== 'date');
+      document.getElementById('setupRatePanel').classList.toggle('hidden', mode !== 'rate');
+      if (mode === 'rate') {
+        updateSetupCalculationPreview();
+      }
+    }
+
+    function setEditMode(mode) {
+      editTargetMode = mode;
+      document.querySelectorAll('#editModeSwitch .mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      document.getElementById('editDatePanel').classList.toggle('hidden', mode !== 'date');
+      document.getElementById('editRatePanel').classList.toggle('hidden', mode !== 'rate');
+
+      if (mode === 'rate') {
+        const hasMeasurements = appState.measurements.length > 0;
+        document.getElementById('editBaseWeightGroup').classList.toggle('hidden', hasMeasurements);
+        document.getElementById('editBaseSourceGroup').classList.toggle('hidden', !hasMeasurements);
+        updateEditCalculationPreview();
+      }
+    }
+
+    document.querySelectorAll('#setupModeSwitch .mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => setSetupMode(btn.dataset.mode));
+    });
+
+    document.querySelectorAll('#editModeSwitch .mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => setEditMode(btn.dataset.mode));
+    });
+
+    ['setupTargetWeight', 'setupStartWeight', 'setupWeeklyRate'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        if (setupTargetMode === 'rate') updateSetupCalculationPreview();
+      });
+    });
+
+    ['editTargetWeight', 'editBaseWeight', 'editWeeklyRate'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        if (editTargetMode === 'rate') updateEditCalculationPreview();
+      });
+    });
+
+    document.getElementById('editBaseSource').addEventListener('change', () => {
+      if (editTargetMode === 'rate') updateEditCalculationPreview();
+    });
+
+    // --- KIRJAUTUMINEN JA ULOSKIRJAUTUMINEN ---
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!supabaseClient) return;
+
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errBox = document.getElementById('loginError');
+      const submitBtn = document.getElementById('loginSubmitBtn');
+
+      errBox.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Kirjaudutaan...';
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Kirjaudu sisään';
+
+      if (error) {
+        errBox.textContent = 'Kirjautuminen epäonnistui: ' + error.message;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      currentUser = data.user;
+      showOnlyView('loadingView');
+      await fetchCloudData();
+      renderApp();
+    });
+
+    async function handleLogout() {
+      if (!supabaseClient) return;
+      await supabaseClient.auth.signOut();
+      currentUser = null;
+      appState = { profile: null, measurements: [] };
+      renderApp();
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    document.getElementById('setupLogoutBtn').addEventListener('click', handleLogout);
+
+    // --- LOMAKKEIDEN TALLENNUS ---
+
+    document.getElementById('setupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const heightEl = document.getElementById('setupHeight');
+      const targetWeightEl = document.getElementById('setupTargetWeight');
+
+      const heightVal = parseNumFi(heightEl.value);
+      const targetWeightVal = parseNumFi(targetWeightEl.value);
+
+      markInvalid(heightEl, isNaN(heightVal) || heightVal < 100 || heightVal > 250);
+      markInvalid(targetWeightEl, isNaN(targetWeightVal) || targetWeightVal < 30 || targetWeightVal > 300);
+
+      let targetDateISO = null;
+      let savedWeeklyRate = null;
+
+      if (setupTargetMode === 'date') {
+        const targetDateEl = document.getElementById('setupTargetDate');
+        targetDateISO = parseDateFiToISO(targetDateEl.value);
+        markInvalid(targetDateEl, !targetDateISO);
+      } else {
+        const startWeightEl = document.getElementById('setupStartWeight');
+        const rateEl = document.getElementById('setupWeeklyRate');
+        const startW = parseNumFi(startWeightEl.value);
+        const rateW = parseNumFi(rateEl.value);
+
+        markInvalid(startWeightEl, isNaN(startW) || startW < 30 || startW > 300);
+        markInvalid(rateEl, isNaN(rateW) || rateW <= 0 || rateW > 10);
+
+        const calc = computeTargetDateFromRate(startW, targetWeightVal, rateW, new Date());
+        if (calc) {
+          targetDateISO = calc.isoDate;
+          savedWeeklyRate = Math.round(rateW * 100) / 100;
+        }
+      }
+
+      if (isNaN(heightVal) || isNaN(targetWeightVal) || !targetDateISO) return;
+
+      const btn = document.getElementById('setupSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Tallennetaan...';
+
+      const newProfile = {
+        gender: document.getElementById('setupGender').value,
+        heightCm: Math.round(heightVal * 10) / 10,
+        targetWeightKg: Math.round(targetWeightVal * 10) / 10,
+        targetDate: targetDateISO,
+        ...(savedWeeklyRate ? { weeklyRateKg: savedWeeklyRate } : {})
+      };
+
+      const ok = await saveCloudData({
+        profile: newProfile,
+        measurements: appState.measurements
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Aloita seuranta';
+
+      if (ok) renderApp();
+    });
+
+    document.getElementById('measurementForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const weightEl = document.getElementById('weightInput');
+      const timeEl = document.getElementById('timestampInput');
+
+      const weightVal = parseNumFi(weightEl.value);
+      const dateObj = parseDateTimeFi(timeEl.value);
+
+      markInvalid(weightEl, isNaN(weightVal) || weightVal < 30 || weightVal > 300);
+      markInvalid(timeEl, !dateObj);
+
+      if (isNaN(weightVal) || !dateObj) return;
+
+      const btn = document.getElementById('saveMeasurementBtn');
+      btn.disabled = true;
+      btn.textContent = 'Tallennetaan...';
+
+      const nextMeasurements = [
+        ...appState.measurements,
+        {
+          timestamp: dateObj.toISOString(),
+          weightKg: Math.round(weightVal * 10) / 10
+        }
+      ];
+
+      const ok = await saveCloudData({
+        profile: appState.profile,
+        measurements: nextMeasurements
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Tallenna';
+
+      if (ok) {
+        weightEl.value = '';
+        renderApp();
+      }
+    });
+
+    document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      const { profile, measurements } = appState;
+      if (!profile) return;
+      document.getElementById('editGender').value = profile.gender;
+      document.getElementById('editHeight').value = formatNumFi(profile.heightCm, profile.heightCm % 1 === 0 ? 0 : 1);
+      document.getElementById('editTargetWeight').value = formatNumFi(profile.targetWeightKg, 1);
+      document.getElementById('editTargetDate').value = formatDateFi(profile.targetDate + 'T08:00:00');
+
+      if (profile.weeklyRateKg) {
+        document.getElementById('editWeeklyRate').value = formatNumFi(profile.weeklyRateKg, 2);
+      } else if (measurements.length > 0) {
+        const first = measurements[0];
+        const targetDateObj = new Date(profile.targetDate + 'T08:00:00');
+        const msDiff = targetDateObj.getTime() - new Date(first.timestamp).getTime();
+        if (msDiff > 0) {
+          const weeks = msDiff / (1000 * 60 * 60 * 24 * 7);
+          const plannedRate = Math.abs(first.weightKg - profile.targetWeightKg) / weeks;
+          if (plannedRate > 0.01 && plannedRate < 10) {
+            document.getElementById('editWeeklyRate').value = formatNumFi(plannedRate, 2);
+          }
+        }
+      }
+
+      setEditMode('date');
+      document.getElementById('settingsModal').classList.remove('hidden');
+    });
+
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.add('hidden');
+    });
+
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const heightEl = document.getElementById('editHeight');
+      const targetWeightEl = document.getElementById('editTargetWeight');
+
+      const heightVal = parseNumFi(heightEl.value);
+      const targetWeightVal = parseNumFi(targetWeightEl.value);
+
+      markInvalid(heightEl, isNaN(heightVal) || heightVal < 100 || heightVal > 250);
+      markInvalid(targetWeightEl, isNaN(targetWeightVal) || targetWeightVal < 30 || targetWeightVal > 300);
+
+      let targetDateISO = null;
+      let savedWeeklyRate = null;
+
+      if (editTargetMode === 'date') {
+        const targetDateEl = document.getElementById('editTargetDate');
+        targetDateISO = parseDateFiToISO(targetDateEl.value);
+        markInvalid(targetDateEl, !targetDateISO);
+      } else {
+        const rateEl = document.getElementById('editWeeklyRate');
+        const rateW = parseNumFi(rateEl.value);
+        markInvalid(rateEl, isNaN(rateW) || rateW <= 0 || rateW > 10);
+
+        if (appState.measurements.length === 0) {
+          const baseWeightEl = document.getElementById('editBaseWeight');
+          const baseW = parseNumFi(baseWeightEl.value);
+          markInvalid(baseWeightEl, isNaN(baseW) || baseW < 30 || baseW > 300);
+        }
+
+        const calc = updateEditCalculationPreview();
+        if (calc) {
+          targetDateISO = calc.isoDate;
+          savedWeeklyRate = Math.round(rateW * 100) / 100;
+        }
+      }
+
+      if (isNaN(heightVal) || isNaN(targetWeightVal) || !targetDateISO) return;
+
+      const btn = document.getElementById('saveSettingsBtn');
+      btn.disabled = true;
+      btn.textContent = 'Tallennetaan...';
+
+      const updatedProfile = {
+        gender: document.getElementById('editGender').value,
+        heightCm: Math.round(heightVal * 10) / 10,
+        targetWeightKg: Math.round(targetWeightVal * 10) / 10,
+        targetDate: targetDateISO,
+        ...(savedWeeklyRate ? { weeklyRateKg: savedWeeklyRate } : {})
+      };
+
+      const ok = await saveCloudData({
+        profile: updatedProfile,
+        measurements: appState.measurements
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Tallenna muutokset';
+
+      if (ok) {
+        document.getElementById('settingsModal').classList.add('hidden');
+        renderApp();
+      }
+    });
+
+    // --- ALUSTUS ---
+
+    async function initApp() {
+      if (!isConfigured) {
+        document.getElementById('configWarning').classList.remove('hidden');
+        document.getElementById('loginSubmitBtn').disabled = true;
+        showOnlyView('loginView');
+        return;
+      }
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        currentUser = session.user;
+        await fetchCloudData();
+      }
+      renderApp();
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
